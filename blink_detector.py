@@ -24,8 +24,8 @@ def get_blink_ratio(eye_points, facial_landmark):
     center_botton = midpoint(facial_landmark.part(eye_points[5]), facial_landmark.part(eye_points[4]))
 
     # Drawing lines
-    # cv2.line(frame, (left_end.x, left_end.y), (right_end.x, right_end.y), (255, 0, 0))
-    # cv2.line(frame, center_botton, center_top, (255, 255, 0))
+    cv2.line(frame, (left_end.x, left_end.y), (right_end.x, right_end.y), (255, 0, 0))
+    cv2.line(frame, center_botton, center_top, (255, 255, 0))
 
     # Calculating lengths of line
     hor_line_length = hypot((left_end.x - right_end.x), (left_end.y - right_end.y))
@@ -65,7 +65,7 @@ def get_gaze_ratio(eye_points, facial_landmark):
     _, threshold_eye = cv2.threshold(grey_eye, 127, 255, cv2.THRESH_BINARY)
 
     threshold_eye = cv2.resize(threshold_eye, None, fx=5, fy=5)
-    cv2.imshow("Threshold", threshold_eye)
+    # cv2.imshow("Threshold", threshold_eye)
 
     height, width = threshold_eye.shape
     left_side_threshold = threshold_eye[0 : height, 0 : int(width/2)]
@@ -74,7 +74,12 @@ def get_gaze_ratio(eye_points, facial_landmark):
     right_side_threshold = threshold_eye[0 : height, int(width/2) : width]
     right_side_white = cv2.countNonZero(right_side_threshold)
 
-    gaze_ratio = left_side_white/right_side_white if right_side_white > 0 else 0
+    if left_side_white == 0:
+        gaze_ratio = 5
+    elif right_side_white == 0:
+        gaze_ratio = 0.1
+    else:
+        gaze_ratio = left_side_white/right_side_white if right_side_white > 0 else 0
 
     return gaze_ratio
 
@@ -121,9 +126,9 @@ while True:
 
         gaze_ratio = (gaze_ratio_left + gaze_ratio_right)/2
         cv2.putText(frame, str(gaze_ratio), (50, 200), font, 2, (0,0,0))
-        if gaze_ratio <= 0.8:
+        if gaze_ratio < 0.76:
             cv2.putText(frame, "RIGHT GAZING", (50, 100), font, 2, (0,0,0))
-        elif 1 < gaze_ratio < 1.8:
+        elif 1 < gaze_ratio < 1.7:
             cv2.putText(frame, "CENTER GAZING", (50, 100), font, 2, (0,0,0))
         else:
             cv2.putText(frame, "LEFT GAZING", (50, 100), font, 2, (0,0,0))
