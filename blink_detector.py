@@ -25,7 +25,7 @@ def get_blink_ratio(eye_points, facial_landmark):
 
     # Drawing lines
     cv2.line(frame, (left_end.x, left_end.y), (right_end.x, right_end.y), (255, 0, 0))
-    cv2.line(frame, center_botton, center_top, (255, 255, 0))
+    cv2.line(frame, center_botton, center_top, (255, 0, 0))
 
     # Calculating lengths of line
     hor_line_length = hypot((left_end.x - right_end.x), (left_end.y - right_end.y))
@@ -37,35 +37,36 @@ def get_blink_ratio(eye_points, facial_landmark):
 
 
 def get_gaze_ratio(eye_points, facial_landmark):
-    left_eye_region = np.array([(facial_landmark.part(eye_points[0]).x, facial_landmark.part(eye_points[0]).y),
-                                (facial_landmark.part(eye_points[1]).x, facial_landmark.part(eye_points[1]).y),
-                                (facial_landmark.part(eye_points[2]).x, facial_landmark.part(eye_points[2]).y),
-                                (facial_landmark.part(eye_points[3]).x, facial_landmark.part(eye_points[3]).y),
-                                (facial_landmark.part(eye_points[4]).x, facial_landmark.part(eye_points[4]).y),
-                                (facial_landmark.part(eye_points[5]).x, facial_landmark.part(eye_points[5]).y)], np.int32)
+    eye_region = np.array([(facial_landmark.part(eye_points[0]).x, facial_landmark.part(eye_points[0]).y),
+                            (facial_landmark.part(eye_points[1]).x, facial_landmark.part(eye_points[1]).y),
+                            (facial_landmark.part(eye_points[2]).x, facial_landmark.part(eye_points[2]).y),
+                            (facial_landmark.part(eye_points[3]).x, facial_landmark.part(eye_points[3]).y),
+                            (facial_landmark.part(eye_points[4]).x, facial_landmark.part(eye_points[4]).y),
+                            (facial_landmark.part(eye_points[5]).x, facial_landmark.part(eye_points[5]).y)], np.int32)
 
-    # cv2.polylines(frame, [left_eye_region], True, (0, 0, 255))
+    # cv2.polylines(frame, [eye_region], True, (0, 0, 255))
 
 
     height, width, _ = frame.shape
     mask = np.zeros((height, width), np.uint8)
 
-    cv2.polylines(mask, [left_eye_region], True, 255)
-    cv2.fillPoly(mask, [left_eye_region], 255)
+    cv2.polylines(mask, [eye_region], True, 255)
+    cv2.fillPoly(mask, [eye_region], 255)
 
     eye = cv2.bitwise_and(gray, gray, mask=mask)
 
     # locating extreme ponits of the eyes
-    min_x = np.min(left_eye_region[:, 0])
-    max_x = np.max(left_eye_region[:, 0])
-    min_y = np.min(left_eye_region[:, 1])
-    max_y = np.max(left_eye_region[:, 1])
+    min_x = np.min(eye_region[:, 0])
+    max_x = np.max(eye_region[:, 0])
+    min_y = np.min(eye_region[:, 1])
+    max_y = np.max(eye_region[:, 1])
 
     grey_eye = eye[min_y:max_y, min_x:max_x]
     _, threshold_eye = cv2.threshold(grey_eye, 127, 255, cv2.THRESH_BINARY)
 
-    threshold_eye = cv2.resize(threshold_eye, None, fx=5, fy=5)
-    # cv2.imshow("Threshold", threshold_eye)
+    threshold_eye = cv2.resize(threshold_eye, None, fx=10, fy=10)
+    cv2.imshow("Threshold", threshold_eye)
+    # cv2.imshow("MASK", mask)
 
     height, width = threshold_eye.shape
     left_side_threshold = threshold_eye[0 : height, 0 : int(width/2)]
@@ -99,14 +100,30 @@ while True:
         ### BLINK DETECTION ###
 
         # Print landmark coordinated and circle around
+        # part0 = landmarks.part(36)
         # part1 = landmarks.part(37)
         # part2 = landmarks.part(38)
         # part3 = landmarks.part(40)
         # part4 = landmarks.part(41)
+        # part5 = landmarks.part(43)
+        # part6 = landmarks.part(44)
+        # part7 = landmarks.part(46)
+        # part8 = landmarks.part(47)
+        # part9 = landmarks.part(39)
+        # part10 = landmarks.part(42)
+        # part11 = landmarks.part(45)
         # cv2.circle(frame, (part1.x, part1.y), 3, (0, 255, 255), 0)
         # cv2.circle(frame, (part2.x, part2.y), 3, (0, 255, 255), 0)
         # cv2.circle(frame, (part3.x, part3.y), 3, (0, 255, 255), 0)
         # cv2.circle(frame, (part4.x, part4.y), 3, (0, 255, 255), 0)
+        # cv2.circle(frame, (part5.x, part5.y), 3, (0, 255, 255), 0)
+        # cv2.circle(frame, (part6.x, part6.y), 3, (0, 255, 255), 0)
+        # cv2.circle(frame, (part7.x, part7.y), 3, (0, 255, 255), 0)
+        # cv2.circle(frame, (part8.x, part8.y), 3, (0, 255, 255), 0)
+        # cv2.circle(frame, (part0.x, part0.y), 3, (0, 255, 255), 0)
+        # cv2.circle(frame, (part9.x, part9.y), 3, (0, 255, 255), 0)
+        # cv2.circle(frame, (part10.x, part10.y), 3, (0, 255, 255), 0)
+        # cv2.circle(frame, (part11.x, part11.y), 3, (0, 255, 255), 0)
 
         left_ratio = get_blink_ratio([36, 37, 38, 39, 40, 41], landmarks)
         right_ratio = get_blink_ratio([42, 43, 44, 45, 46, 47], landmarks)
@@ -125,10 +142,10 @@ while True:
         gaze_ratio_right = get_gaze_ratio([42, 43, 44, 45, 46, 47], landmarks)
 
         gaze_ratio = (gaze_ratio_left + gaze_ratio_right)/2
-        cv2.putText(frame, str(gaze_ratio), (50, 200), font, 2, (0,0,0))
-        if gaze_ratio < 0.76:
+        # cv2.putText(frame, str(gaze_ratio), (50, 200), font, 2, (0,0,0))
+        if gaze_ratio < 0.5:
             cv2.putText(frame, "RIGHT GAZING", (50, 100), font, 2, (0,0,0))
-        elif 1 < gaze_ratio < 1.7:
+        elif 0.5 < gaze_ratio < 2:
             cv2.putText(frame, "CENTER GAZING", (50, 100), font, 2, (0,0,0))
         else:
             cv2.putText(frame, "LEFT GAZING", (50, 100), font, 2, (0,0,0))
